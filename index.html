@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tap to Earn</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f6f8fb; margin:0; }
+    header { background:#1976d2; color:#fff; padding:15px; font-size:20px; font-weight:bold; }
+    #coin {
+      margin:40px auto;
+      width:160px; height:160px;
+      cursor:pointer;
+      transition: transform 0.1s;
+    }
+    #coin:active { transform: scale(0.9) rotate(5deg); }
+    #balance { font-size:26px; margin:20px 0; font-weight:bold; }
+    footer {
+      position:fixed; bottom:0; left:0; right:0; 
+      display:flex; justify-content:space-around; 
+      background:#fff; border-top:1px solid #ddd; padding:10px 0;
+    }
+    footer button {
+      background:none; border:none; font-size:16px; cursor:pointer;
+      color:#1976d2; font-weight:600;
+    }
+    .page { display:none; padding:20px; }
+    .active { display:block; }
+  </style>
+</head>
+<body>
+
+<header>Tap to Earn</header>
+
+<div id="home" class="page active">
+  <p id="balance">Balance: 0 💰</p>
+  <!-- 🪙 Round Coin Image -->
+  <img id="coin" src="coin.png" alt="Coin" onclick="tapCoin()" />
+</div>
+
+<div id="referral" class="page">
+  <h2>Referral System</h2>
+  <p>Share this link with friends:</p>
+  <input id="refLink" style="width:90%;padding:8px" readonly />
+  <p>Referral Bonus: +1 coin for both!</p>
+</div>
+
+<div id="wallet" class="page">
+  <h2>Wallet History</h2>
+  <ul id="history"></ul>
+</div>
+
+<div id="profile" class="page">
+  <h2>My Profile</h2>
+  <p><b>User ID:</b> <span id="userId"></span></p>
+  <p><b>Total Coins:</b> <span id="profileCoins"></span></p>
+</div>
+
+<footer>
+  <button onclick="showPage('home')">Home</button>
+  <button onclick="showPage('referral')">Referral</button>
+  <button onclick="showPage('wallet')">Wallet</button>
+  <button onclick="showPage('profile')">Profile</button>
+</footer>
+
+<script>
+  // Unique User ID
+  let userId = localStorage.getItem("userId");
+  if (!userId) {
+    userId = "user_" + Math.floor(Math.random()*1000000);
+    localStorage.setItem("userId", userId);
+  }
+  document.getElementById("userId").innerText = userId;
+
+  // Balance & History
+  let balance = parseInt(localStorage.getItem("balance") || 0);
+  let history = JSON.parse(localStorage.getItem("history") || "[]");
+
+  function updateUI() {
+    document.getElementById("balance").innerText = `Balance: ${balance} 💰`;
+    document.getElementById("profileCoins").innerText = balance;
+    let h = document.getElementById("history");
+    h.innerHTML = "";
+    history.forEach(e => {
+      let li = document.createElement("li");
+      li.innerText = e;
+      h.appendChild(li);
+    });
+  }
+  updateUI();
+
+  function tapCoin() {
+    balance++;
+    history.push(`+1 coin (Tap)`);
+    localStorage.setItem("balance", balance);
+    localStorage.setItem("history", JSON.stringify(history));
+    updateUI();
+  }
+
+  // Referral Link
+  const baseURL = window.location.origin;
+  const refLink = `${baseURL}?ref=${userId}`;
+  document.getElementById("refLink").value = refLink;
+
+  // Referral Bonus
+  const urlParams = new URLSearchParams(window.location.search);
+  const ref = urlParams.get("ref");
+  if (ref && ref !== userId && !localStorage.getItem("refGiven")) {
+    balance += 1;
+    history.push(`+1 coin (Referral Bonus from ${ref})`);
+    localStorage.setItem("balance", balance);
+    localStorage.setItem("history", JSON.stringify(history));
+    localStorage.setItem("refGiven", "true");
+    updateUI();
+    alert("Referral bonus added!");
+  }
+
+  function showPage(page) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(page).classList.add("active");
+  }
+</script>
+
+</body>
+</html>
